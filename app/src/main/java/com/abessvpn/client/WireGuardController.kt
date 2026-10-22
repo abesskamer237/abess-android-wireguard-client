@@ -1,4 +1,4 @@
-package com.abessvpn.client
+package com.luna.vpn
 
 import android.content.Context
 import com.wireguard.android.backend.GoBackend
@@ -15,7 +15,7 @@ object WireGuardController {
     @Volatile private var currentState: Tunnel.State = Tunnel.State.DOWN
 
     private val tunnel = object : Tunnel {
-        override fun getName(): String = "ABESS"
+        override fun getName(): String = "LUNA"
         override fun onStateChange(newState: Tunnel.State) {
             currentState = newState
         }
