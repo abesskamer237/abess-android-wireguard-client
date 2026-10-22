@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
             }.onSuccess { text ->
                 importedText = text
                 statusText = runCatching {
-                    Config.parse(StringReader(text))
+                    Config.parse(StringReader(text).buffered())
                     "Profil WireGuard reconnu — prêt à se connecter"
                 }.getOrElse { e -> "Profil invalide : ${e.message ?: "erreur de format"}" }
             }.onFailure { e ->
@@ -203,7 +203,7 @@ class MainActivity : ComponentActivity() {
                 }
                 val config = response.optString("config")
                 if (config.isBlank()) throw IllegalStateException("La réponse ne contient pas de configuration")
-                Config.parse(StringReader(config))
+                Config.parse(StringReader(config).buffered())
                 withContext(Dispatchers.Main) {
                     importedText = config
                     statusText = "Configuration reçue et validée. Appuie sur Se connecter."
@@ -228,7 +228,7 @@ class MainActivity : ComponentActivity() {
         statusText = "Validation du profil et démarrage du tunnel…"
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val config = Config.parse(StringReader(profile))
+                val config = Config.parse(StringReader(profile).buffered())
                 backend.setState(abessTunnel, Tunnel.State.UP, config)
                 withContext(Dispatchers.Main) {
                     tunnelUp = true
