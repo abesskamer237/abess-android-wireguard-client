@@ -1,4 +1,4 @@
-package com.abessvpn.client
+package com.luna.vpn
 
 data class WireGuardProfile(val interfaceSection: Map<String, String>, val peerSection: Map<String, String>) {
     fun validate(): List<String> {
