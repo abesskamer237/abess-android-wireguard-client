@@ -218,7 +218,6 @@ class MainActivity : ComponentActivity() {
         statusText = "Validation du profil et démarrage du tunnel…"
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val config = Config.parse(StringReader(profile).buffered())
                 WireGuardController.connect(applicationContext, profile)
                 withContext(Dispatchers.Main) {
                     tunnelUp = true
