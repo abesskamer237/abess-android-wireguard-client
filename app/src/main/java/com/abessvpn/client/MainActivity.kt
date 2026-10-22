@@ -36,6 +36,7 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     private var importedText by mutableStateOf("")
     private var statusText by mutableStateOf("Prêt — aucun tunnel actif")
+    private var subscriptionText by mutableStateOf("Aucun abonnement chargé")
     private var tunnelUp by mutableStateOf(WireGuardController.isUp())
 
     
@@ -93,6 +94,7 @@ class MainActivity : ComponentActivity() {
                     Text("ABESS VPN", style = MaterialTheme.typography.headlineSmall)
                     Text("WireGuard standard — moteur userspace officiel")
                     Text("État : $statusText")
+                    Text("Abonnement : $subscriptionText")
 
                     OutlinedTextField(
                         value = apiUrl,
@@ -194,8 +196,17 @@ class MainActivity : ComponentActivity() {
                 val config = response.optString("config")
                 if (config.isBlank()) throw IllegalStateException("La réponse ne contient pas de configuration")
                 Config.parse(StringReader(config).buffered())
+                val subscription = response.optJSONObject("subscription")
+                val plan = subscription?.optString("plan").orEmpty()
+                val expiry = subscription?.optString("expiresAt").orEmpty()
+                val maxDevices = subscription?.optInt("maxDevices", 0) ?: 0
                 withContext(Dispatchers.Main) {
                     importedText = config
+                    subscriptionText = if (plan.isNotBlank() && expiry.isNotBlank()) {
+                        "$plan — expire le $expiry — appareils max : $maxDevices"
+                    } else {
+                        "Profil importé sans métadonnées d'abonnement"
+                    }
                     statusText = "Configuration reçue et validée. Appuie sur Se connecter."
                 }
             } catch (e: Exception) {
