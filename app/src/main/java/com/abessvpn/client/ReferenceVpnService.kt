@@ -1,4 +1,4 @@
-package com.abessvpn.client
+package com.luna.vpn
 
 import android.net.VpnService
 import android.content.Intent
