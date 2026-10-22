@@ -1,4 +1,4 @@
-package com.abessvpn.client
+package com.luna.vpn
 
 import android.net.VpnService
 import android.os.Bundle
@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("ABESS VPN", style = MaterialTheme.typography.headlineSmall)
+                    Text("LUNA", style = MaterialTheme.typography.headlineSmall)
                     Text("WireGuard standard — moteur userspace officiel")
                     Text("État : $statusText")
                     Text("Abonnement : $subscriptionText")
@@ -120,7 +120,7 @@ class MainActivity : ComponentActivity() {
 
                     OutlinedButton(
                         onClick = {
-                            if (importedText.isNotBlank()) exportProfile.launch("abess-wireguard.conf")
+                            if (importedText.isNotBlank()) exportProfile.launch("luna-wireguard.conf")
                             else statusText = "Importe d'abord un profil WireGuard"
                         },
                         modifier = Modifier.fillMaxWidth()
