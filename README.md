@@ -1,26 +1,30 @@
 # ABESS Android WireGuard Client
 
-Android/Kotlin + Jetpack Compose reference scaffold for standard WireGuard profiles.
+Android/Kotlin + Jetpack Compose client scaffold using the official embeddable WireGuard Android tunnel library.
 
-## Current state
+## Implemented in this revision
 
-- Profile import/export and basic syntax validation are implemented.
-- The VpnService is intentionally a lifecycle stub and stops without creating a TUN.
-- The API button is a placeholder; it does not make a network request.
-- The WireGuard userspace engine is not integrated, so this repository does not yet provide a working VPN connection.
-- It does not implement or claim compatibility with Geny's proprietary WSS, camouflage, or SlowDNS transports.
+- Imports and exports standard WireGuard `.conf` profiles.
+- Parses configurations using the WireGuard library's parser.
+- Requests Android VPN permission before starting a tunnel.
+- Starts/stops the userspace WireGuard backend through `GoBackend`.
+- Adds CI build verification.
+
+## Still incomplete
+
+- The ABESS API button/enrollment flow is not connected to a backend yet.
+- No account, subscription expiry, payment, device authorization, or lease heartbeat integration exists in this reference client.
+- A successful APK build does not prove that a server handshake, DNS resolution, or Internet routing works. Test with a valid profile and reachable WireGuard server on a real Android device.
+- This is standard WireGuard over UDP; it does not implement Geny's proprietary WSS/camouflage/SlowDNS transports.
 
 ## Build
 
-Requires JDK 17 and Gradle 8.9 (Android Gradle Plugin 8.7.3).
+Requires JDK 17 and Gradle 8.9+ (Android Gradle Plugin 8.7.3).
 
     gradle assembleDebug
 
-GitHub Actions runs the same debug build on pushes and pull requests. A successful build verifies compilation only; it does not prove a real tunnel works.
+GitHub Actions builds the debug APK on pushes and pull requests. The WireGuard tunnel library is published on Maven Central; see the official [WireGuard embedding documentation](https://www.wireguard.com/embedding/).
 
-## Next steps for a functional VPN
+## Security
 
-1. Integrate and audit the official WireGuard Android tunnel library/engine.
-2. Implement the Android VPN permission flow and tunnel lifecycle, with explicit error reporting.
-3. Replace the placeholder API button with authenticated HTTPS enrollment using short-lived, single-use tokens. Never put the server's admin token in the app.
-4. Test handshake, DNS, IPv4/IPv6 routing, reconnect, revocation, and expiry on a real Android device.
+Client configuration contains a private key. Do not share profile files or paste them into public issues. Never put the server's administrative token in the Android app.
