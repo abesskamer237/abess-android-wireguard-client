@@ -24,8 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.wireguard.android.backend.GoBackend
-import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
 import org.json.JSONObject
 import java.io.StringReader
@@ -38,18 +36,9 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     private var importedText by mutableStateOf("")
     private var statusText by mutableStateOf("Prêt — aucun tunnel actif")
-    private var tunnelUp by mutableStateOf(false)
+    private var tunnelUp by mutableStateOf(WireGuardController.isUp())
 
-    private val backend by lazy { GoBackend(applicationContext) }
-    private val abessTunnel = object : Tunnel {
-        override fun getName(): String = "ABESS"
-        override fun onStateChange(newState: Tunnel.State) {
-            runOnUiThread {
-                tunnelUp = newState == Tunnel.State.UP
-                statusText = if (tunnelUp) "Tunnel WireGuard actif" else "Tunnel arrêté"
-            }
-        }
-    }
+    
 
     private val vpnPermission = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -92,6 +81,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        tunnelUp = WireGuardController.isUp()
         setContent {
             MaterialTheme {
                 var apiUrl by androidx.compose.runtime.remember { mutableStateOf(BuildConfig.DEFAULT_API_BASE_URL) }
@@ -229,7 +219,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val config = Config.parse(StringReader(profile).buffered())
-                backend.setState(abessTunnel, Tunnel.State.UP, config)
+                WireGuardController.connect(applicationContext, profile)
                 withContext(Dispatchers.Main) {
                     tunnelUp = true
                     statusText = "Tunnel activé. Vérifie le handshake et le trafic réel."
@@ -247,7 +237,7 @@ class MainActivity : ComponentActivity() {
         statusText = "Arrêt du tunnel…"
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                backend.setState(abessTunnel, Tunnel.State.DOWN, null)
+                WireGuardController.disconnect(applicationContext)
                 withContext(Dispatchers.Main) {
                     tunnelUp = false
                     statusText = "Tunnel arrêté"
