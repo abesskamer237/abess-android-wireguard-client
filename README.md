@@ -1,4 +1,4 @@
-# ABESS Android WireGuard Client
+# LUNA Android WireGuard Client
 
 Android/Kotlin + Jetpack Compose client scaffold using the official embeddable WireGuard Android tunnel library.
 
@@ -13,9 +13,9 @@ Android/Kotlin + Jetpack Compose client scaffold using the official embeddable W
 ## Still incomplete
 
 - The enrollment button calls `POST /v1/enroll` over HTTPS using a one-time activation code issued by the server admin. The server only issues such codes for an active, paid, unexpired subscription with available device slots. The app displays the returned plan, expiry and device allowance. See the server repository's `docs/enrollment.md`.
-- Customer checkout, provider payment UI, account login and lease heartbeat are not integrated into this reference client. The server enforces subscription status, expiry and device limits; provider-specific payment verification must be configured on the server.
+- The server repository now exposes a Monetbil checkout endpoint and signed notification handler. This Android scaffold does not yet include the complete plan-purchase/account flow; checkout currently requires a pending subscription created on the server. See the server repository README for required Monetbil environment variables.
 - A successful APK build does not prove that a server handshake, DNS resolution, or Internet routing works. Test with a valid profile and reachable WireGuard server on a real Android device.
-- This is standard WireGuard over UDP; it does not implement Geny's proprietary WSS/camouflage/SlowDNS transports.
+- This is standard WireGuard over UDP; it does not implement any transport other than standard WireGuard over UDP.
 
 ## Build
 
