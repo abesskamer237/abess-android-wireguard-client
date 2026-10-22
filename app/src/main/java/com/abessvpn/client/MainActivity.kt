@@ -27,7 +27,10 @@ import androidx.lifecycle.lifecycleScope
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.Tunnel
 import com.wireguard.config.Config
+import org.json.JSONObject
 import java.io.StringReader
+import java.net.HttpURLConnection
+import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -91,6 +94,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
+                var apiUrl by androidx.compose.runtime.remember { mutableStateOf(BuildConfig.DEFAULT_API_BASE_URL) }
+                var enrollmentToken by androidx.compose.runtime.remember { mutableStateOf("") }
                 Column(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -98,6 +103,23 @@ class MainActivity : ComponentActivity() {
                     Text("ABESS VPN", style = MaterialTheme.typography.headlineSmall)
                     Text("WireGuard standard — moteur userspace officiel")
                     Text("État : $statusText")
+
+                    OutlinedTextField(
+                        value = apiUrl,
+                        onValueChange = { apiUrl = it },
+                        label = { Text("URL de base de l'API HTTPS") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = enrollmentToken,
+                        onValueChange = { enrollmentToken = it },
+                        label = { Text("Code d'activation à usage unique") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Button(
+                        onClick = { requestProfileFromApi(apiUrl, enrollmentToken) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Obtenir une configuration") }
 
                     OutlinedButton(
                         onClick = { importProfile.launch(arrayOf("text/*", "application/octet-stream")) },
@@ -136,10 +158,60 @@ class MainActivity : ComponentActivity() {
                     ) { Text("Se déconnecter") }
 
                     Text(
-                        "La connexion nécessite un profil valide et un serveur WireGuard joignable. " +
-                            "L'enrôlement API ABESS n'est pas encore relié dans cette version."
+                        "Utilise un code d'activation à usage unique créé par l'administrateur. " +
+                            "Le profil contient une clé privée : ne le partage pas."
                     )
                 }
+            }
+        }
+    }
+
+    private fun requestProfileFromApi(apiBase: String, enrollmentToken: String) {
+        val base = apiBase.trim().trimEnd('/')
+        val token = enrollmentToken.trim()
+        if (!base.startsWith("https://", ignoreCase = true)) {
+            statusText = "Sécurité : l'API doit utiliser HTTPS"
+            return
+        }
+        if (token.isBlank()) {
+            statusText = "Entre un code d'activation à usage unique"
+            return
+        }
+        statusText = "Demande de configuration sécurisée…"
+        lifecycleScope.launch(Dispatchers.IO) {
+            var connection: HttpURLConnection? = null
+            try {
+                connection = (URL(base + "/v1/enroll").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 15000
+                    readTimeout = 30000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                    setRequestProperty("Accept", "application/json")
+                    setRequestProperty("Cache-Control", "no-store")
+                }
+                val body = JSONObject().put("token", token).toString().toByteArray(Charsets.UTF_8)
+                connection.outputStream.use { it.write(body) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val responseText = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: "{}"
+                val response = JSONObject(responseText)
+                if (code !in 200..299) {
+                    throw IllegalStateException(response.optString("error", "Erreur HTTP $code"))
+                }
+                val config = response.optString("config")
+                if (config.isBlank()) throw IllegalStateException("La réponse ne contient pas de configuration")
+                Config.parse(StringReader(config))
+                withContext(Dispatchers.Main) {
+                    importedText = config
+                    statusText = "Configuration reçue et validée. Appuie sur Se connecter."
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    statusText = "Échec de l'enrôlement : ${e.message ?: e.javaClass.simpleName}"
+                }
+            } finally {
+                connection?.disconnect()
             }
         }
     }
