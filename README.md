@@ -12,8 +12,8 @@ Android/Kotlin + Jetpack Compose client scaffold using the official embeddable W
 
 ## Still incomplete
 
-- The ABESS API button/enrollment flow is not connected to a backend yet.
-- No account, subscription expiry, payment, device authorization, or lease heartbeat integration exists in this reference client.
+- The enrollment button calls `POST /v1/enroll` over HTTPS using a one-time activation code issued by the server admin. See the server repository's `docs/enrollment.md`.
+- Account login, subscription expiry, payment verification, device authorization, and lease heartbeat are not integrated into this reference client.
 - A successful APK build does not prove that a server handshake, DNS resolution, or Internet routing works. Test with a valid profile and reachable WireGuard server on a real Android device.
 - This is standard WireGuard over UDP; it does not implement Geny's proprietary WSS/camouflage/SlowDNS transports.
 
