@@ -183,6 +183,8 @@ class MainActivity : ComponentActivity() {
             try {
                 connection = (URL(base + "/v1/enroll").openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
+                    instanceFollowRedirects = false
+                    useCaches = false
                     connectTimeout = 15000
                     readTimeout = 30000
                     doOutput = true
